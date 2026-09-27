@@ -4,7 +4,7 @@ get_header();
 global $post;
 $p=wc_get_product($post->ID);
 if(!$p){get_footer();return;}
-$id=$p->get_id(); $img=ss_img($id); $scales=ss_scales($p);
+$id=$p->get_id(); $gallery=ss_gallery($id); $img=$gallery[0]??ss_img($id); $scales=ss_scales($p);
 $min=get_post_meta($id,'_ss_price_min',true); $max=get_post_meta($id,'_ss_price_max',true);
 $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
 ?>
@@ -14,7 +14,7 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
   <div class="product-layout">
     <section class="ss-gallery">
       <div class="gallery-main"><?php if($img): ?><img src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($p->get_name()); ?>"><?php endif; ?></div>
-      <div class="thumbs"><?php for($i=0;$i<4;$i++): ?><button class="thumb" type="button"><?php if($img): ?><img src="<?php echo esc_url($img); ?>" alt=""><?php endif; ?></button><?php endfor; ?></div>
+      <div class="thumbs"><?php foreach(array_slice($gallery,0,4) as $g): ?><button class="thumb" type="button"><img src="<?php echo esc_url($g); ?>" alt=""></button><?php endforeach; ?></div>
     </section>
     <section class="buy">
       <div class="eyebrow"><?php echo esc_html(implode(' · ',$cat_names)); ?> · Resin kit</div>
