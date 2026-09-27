@@ -1,1 +1,1 @@
-<footer class="ss-section"><div class="ss-wrap"><small>Speedstar Models · Development Preview</small></div></footer><?php wp_footer(); ?></body></html>
+<footer><div class="wrap"><div class="brand">SPEED<b>STAR</b></div><p>Scale Model Studio · Speedstar Models development build 0.1</p></div></footer><?php if(class_exists('WooCommerce')):?><div class="woo-ok"><b>●</b> WooCommerce active</div><?php endif; ?><?php wp_footer(); ?></body></html>
