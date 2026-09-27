@@ -15,3 +15,14 @@ Text Domain: speedstar-models
 /* 0.3.1 single-product template fix */
 .ss-single{background:#0b0d0f}.ss-product-crumb{padding-top:28px;color:#7f858b}.ss-gallery button{padding:0;border:0;cursor:pointer}.ss-single .gallery-main{background:#ecece9}.ss-single .gallery-main img{object-fit:contain}.ss-single .thumb img{object-fit:cover}.ss-single .buy{padding-top:8px}
 @media(max-width:820px){.ss-product-crumb{padding:18px 0 0;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ss-single .product-layout{grid-template-columns:1fr;padding:22px 0 38px}.ss-single .gallery-main{aspect-ratio:1/1}.ss-single .buy{padding:12px 2px}.ss-single .buy h1{font-size:30px}.ss-single .buy-price{font-size:23px}.ss-single .addrow{min-height:48px}.ss-single .light-section .products{grid-template-columns:repeat(2,1fr)}}
+
+/* 0.3.3 image-led homepage categories using real catalogue photography */
+.cat-grid-photo .cat-photo{position:relative;min-height:330px;padding:0;overflow:hidden;background:#0b0d0f;border:1px solid #26292c;isolation:isolate}
+.cat-grid-photo .cat-photo:before{content:"";position:absolute;inset:0;background-image:var(--cat-img);background-size:cover;background-position:center;transition:transform .35s ease;z-index:-2}
+.cat-grid-photo .cat-photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,11,.03) 30%,rgba(8,10,11,.95) 100%);z-index:-1}
+.cat-grid-photo .cat-photo:hover:before{transform:scale(1.035)}
+.cat-grid-photo .cat-copy{position:absolute;left:22px;right:22px;bottom:20px;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.cat-grid-photo .cat-copy strong{font-size:25px;line-height:1;color:#fff;text-transform:uppercase}
+.cat-grid-photo .cat-copy small{font-size:11px;line-height:1.35;color:#c5c8ca}
+.cat-grid-photo .cat-copy em{margin-top:8px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#fff;font-style:normal}
+@media(max-width:820px){.cat-grid-photo{grid-template-columns:repeat(2,1fr)}.cat-grid-photo .cat-photo{min-height:245px}.cat-grid-photo .cat-copy{left:15px;right:15px;bottom:15px}.cat-grid-photo .cat-copy strong{font-size:19px}.cat-grid-photo .cat-copy small{font-size:9px}}
