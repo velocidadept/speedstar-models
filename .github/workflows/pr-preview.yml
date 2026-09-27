@@ -1,0 +1,66 @@
+name: WordPress Playground PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: WordPress/action-wp-playground-pr-preview@v3
+        with:
+          blueprint: |
+            {
+              "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+              "landingPage": "/",
+              "preferredVersions": {
+                "php": "8.3",
+                "wp": "latest"
+              },
+              "features": {
+                "networking": true
+              },
+              "siteOptions": {
+                "blogname": "Speedstar Models Dev",
+                "blogdescription": "Scale Model Studio"
+              },
+              "steps": [
+                {
+                  "step": "installTheme",
+                  "themeData": {
+                    "resource": "git:directory",
+                    "url": "https://github.com/${{ github.repository }}.git",
+                    "ref": "${{ github.event.pull_request.head.ref }}",
+                    "path": "/"
+                  },
+                  "options": {
+                    "activate": true
+                  }
+                },
+                {
+                  "step": "installPlugin",
+                  "pluginData": {
+                    "resource": "wordpress.org/plugins",
+                    "slug": "woocommerce"
+                  },
+                  "options": {
+                    "activate": true
+                  }
+                },
+                {
+                  "step": "login",
+                  "username": "admin"
+                }
+              ]
+            }
+          description-template: |
+            ## 🏁 Speedstar Models Preview
+
+            {{PLAYGROUND_BUTTON}}
+
+            **Branch:** `{{PR_HEAD_REF}}` · **Theme:** `{{THEME_SLUG}}`
+          github-token: ${{ secrets.GITHUB_TOKEN }}
