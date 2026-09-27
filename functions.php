@@ -75,3 +75,7 @@ function ss_import_source_catalogue(){
  flush_rewrite_rules(false);
 }
 add_action('wp_loaded','ss_import_source_catalogue',30);
+
+
+/* Shared product-card renderer used by archive and single-product templates. */
+function ss_card_real($p){$id=$p->get_id();$img=ss_img($id);$cats=wc_get_product_category_list($id,' · ');$min=get_post_meta($id,'_ss_price_min',true);$max=get_post_meta($id,'_ss_price_max',true);echo '<article class="product"><a href="'.esc_url(get_permalink($id)).'"><div class="ph">'.($img?'<img class="realimg" src="'.esc_url($img).'" alt="'.esc_attr($p->get_name()).'">':'').'</div><div class="pi"><h3>'.esc_html($p->get_name()).'</h3><div class="meta">'.wp_strip_all_tags($cats).'</div><div class="price">€'.esc_html($min).' – €'.esc_html($max).'</div></div></a></article>';}
