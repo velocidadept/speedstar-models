@@ -1,0 +1,1 @@
+<footer class="ss-section"><div class="ss-wrap"><small>Speedstar Models · Development Preview</small></div></footer><?php wp_footer(); ?></body></html>
