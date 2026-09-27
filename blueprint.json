@@ -1,12 +1,12 @@
 {
-  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
-  "landingPage": "/",
-  "preferredVersions": {"php": "8.3", "wp": "latest"},
-  "features": {"networking": true},
-  "login": true,
-  "siteOptions": {"blogname": "Speedstar Models Dev", "blogdescription": "Scale Model Studio"},
-  "steps": [
-    {"step": "installPlugin", "pluginData": {"resource": "wordpress.org/plugins", "slug": "woocommerce"}, "options": {"activate": true}},
-    {"step": "installTheme", "themeData": {"resource": "git:directory", "url": "https://github.com/velocidadept/speedstar-models.git", "ref": "main", "path": "/"}, "options": {"activate": true}}
+  "$schema":"https://playground.wordpress.net/blueprint-schema.json",
+  "landingPage":"/",
+  "preferredVersions":{"php":"8.3","wp":"latest"},
+  "features":{"networking":true},
+  "login":true,
+  "siteOptions":{"blogname":"Speedstar Models Dev","blogdescription":"Scale Model Studio"},
+  "steps":[
+    {"step":"installPlugin","pluginData":{"resource":"wordpress.org/plugins","slug":"woocommerce"},"options":{"activate":true}},
+    {"step":"installTheme","themeData":{"resource":"git:directory","url":"https://github.com/velocidadept/speedstar-models.git","ref":"main","path":"/"},"options":{"activate":true}}
   ]
 }
