@@ -4,7 +4,7 @@
 <header class="site-head"><div class="wrap head">
 <a class="brand" href="<?php echo esc_url(home_url('/')); ?>" aria-label="Speedstar Models home">SPEED<b>STAR</b></a>
 <nav class="desktop-nav" aria-label="Primary navigation">
-<a href="<?php echo esc_url(ss_category_url('bodykits')); ?>">BODYKITS</a><a href="<?php echo esc_url(ss_category_url('wheels')); ?>">WHEELS</a><a href="<?php echo esc_url(ss_category_url('engines')); ?>">ENGINES</a><a href="<?php echo esc_url(ss_category_url('t-shirts')); ?>">MERCH</a><a href="<?php echo esc_url(home_url('/about/')); ?>">ABOUT</a>
+<a href="<?php echo esc_url(ss_category_url('bodykits')); ?>">BODYKITS</a><a href="<?php echo esc_url(ss_category_url('wheels')); ?>">WHEELS</a><a href="<?php echo esc_url(ss_category_url('engines')); ?>">ENGINES</a><a href="<?php echo esc_url(ss_category_url('t-shirts')); ?>">MERCH</a><a href="<?php echo esc_url(ss_workshop_url()); ?>">WORKSHOP</a><a href="<?php echo esc_url(home_url('/about/')); ?>">ABOUT</a>
 </nav>
 <div class="tools">
 <button class="tool ss-search-toggle" type="button" aria-label="Search products" aria-expanded="false">⌕</button>
