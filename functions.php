@@ -1,6 +1,6 @@
 <?php
 add_action('after_setup_theme',function(){add_theme_support('title-tag');add_theme_support('woocommerce');add_theme_support('post-thumbnails');});
-add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.3.2');});
+add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.3.5');});
 add_filter('woocommerce_enqueue_styles','__return_empty_array');
 
 function ss_img($id){
@@ -78,4 +78,6 @@ add_action('wp_loaded','ss_import_source_catalogue',30);
 
 
 /* Shared product-card renderer used by archive and single-product templates. */
-function ss_card_real($p){$id=$p->get_id();$img=ss_img($id);$cats=wc_get_product_category_list($id,' · ');$min=get_post_meta($id,'_ss_price_min',true);$max=get_post_meta($id,'_ss_price_max',true);echo '<article class="product"><a href="'.esc_url(get_permalink($id)).'"><div class="ph">'.($img?'<img class="realimg" src="'.esc_url($img).'" alt="'.esc_attr($p->get_name()).'">':'').'</div><div class="pi"><h3>'.esc_html($p->get_name()).'</h3><div class="meta">'.wp_strip_all_tags($cats).'</div><div class="price">€'.esc_html($min).' – €'.esc_html($max).'</div></div></a></article>';}
+function ss_price_range($p){$id=$p->get_id();$min=get_post_meta($id,'_ss_price_min',true);$max=get_post_meta($id,'_ss_price_max',true);if($min===''||$min===false)$min=(float)$p->get_price();if($max===''||$max===false)$max=$min;return [(float)$min,(float)$max];}
+function ss_price_range_html($p){[$min,$max]=ss_price_range($p);return $min===$max?'€'.ss_money($min):'€'.ss_money($min).' – €'.ss_money($max);}
+function ss_card_real($p){if(!$p)return;$id=$p->get_id();$img=ss_img($id);$cats=wp_get_post_terms($id,'product_cat',['fields'=>'names']);$cat=is_wp_error($cats)?'':implode(' · ',$cats);echo '<article class="product"><a href="'.esc_url(get_permalink($id)).'"><div class="ph">'.($img?'<img class="realimg" loading="lazy" decoding="async" src="'.esc_url($img).'" alt="'.esc_attr($p->get_name()).'">':'').'</div><div class="pi"><h3>'.esc_html($p->get_name()).'</h3><div class="meta">'.esc_html($cat).'</div><div class="price">'.esc_html(ss_price_range_html($p)).'</div></div></a></article>';}
