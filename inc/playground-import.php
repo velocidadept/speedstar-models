@@ -27,7 +27,7 @@ function ss_ensure_scale_taxonomy($scales){
 }
 function ss_import_source_catalogue(){
  if(!class_exists('WooCommerce'))return;
- $version='full-catalogue-v2-variable';
+ $version='full-catalogue-v3-all-attributes';
  if(get_option('ss_catalogue_seed_version')===$version)return;
  $base='https://speedstarmodels.com/wp-json/wc/store/v1';
  $items=ss_source_products($base); if(!$items)return;
@@ -38,22 +38,28 @@ function ss_import_source_catalogue(){
  foreach($old as $op){if(get_post_meta($op->get_id(),'_ss_playground_product',true))wp_delete_post($op->get_id(),true);}
  foreach($items as $x){
   if(empty($x['name'])||empty($x['slug']))continue;
-  $source_id=(int)($x['id']??0);$scales=[];
-  foreach(($x['attributes']??[]) as $a)if(($a['taxonomy']??'')==='pa_scale')foreach(($a['terms']??[]) as $t)if(!empty($t['name']))$scales[]=$t['name'];
+  $source_id=(int)($x['id']??0);$scales=[];$variation_attrs=[];
+  foreach(($x['attributes']??[]) as $a){
+   if(empty($a['has_variations']))continue;
+   $taxonomy=$a['taxonomy']??'';$name=$a['name']??'';
+   $terms=[];foreach(($a['terms']??[]) as $t)if(isset($t['name']))$terms[]=['name'=>$t['name'],'slug'=>$t['slug']??sanitize_title($t['name'])];
+   if($taxonomy==='pa_scale'){foreach($terms as $t)$scales[]=$t['name'];}
+   $variation_attrs[]=['taxonomy'=>$taxonomy,'name'=>$name,'terms'=>$terms];
+  }
   $scales=array_values(array_unique($scales)); if($scales)ss_ensure_scale_taxonomy($scales);
-  $p=$scales?new WC_Product_Variable():new WC_Product_Simple();
+  $p=$variation_attrs?new WC_Product_Variable():new WC_Product_Simple();
   $p->set_name(wp_strip_all_tags(html_entity_decode($x['name'],ENT_QUOTES|ENT_HTML5,'UTF-8')));$p->set_slug($x['slug']);$p->set_status('publish');$p->set_catalog_visibility('visible');
   if(!empty($x['sku']))$p->set_sku($x['sku']);$p->set_description($x['description']??'');$p->set_short_description($x['short_description']??'');
   $p->set_stock_status(!empty($x['is_in_stock'])?'instock':'outofstock');
   $catids=[];foreach(($x['categories']??[]) as $cat){$slug=$cat['slug']??sanitize_title($cat['name']??'');$term=get_term_by('slug',$slug,'product_cat');if(!$term&&!empty($cat['name'])){$made=wp_insert_term($cat['name'],'product_cat',['slug'=>$slug]);if(!is_wp_error($made))$term=get_term($made['term_id'],'product_cat');}if($term&&!is_wp_error($term))$catids[]=$term->term_id;}$p->set_category_ids($catids);
-  if($scales){$term_ids=[];foreach($scales as $scale){$term=get_term_by('name',$scale,'pa_scale');if($term)$term_ids[]=$term->term_id;} $attr=new WC_Product_Attribute();$attr->set_id(wc_attribute_taxonomy_id_by_name('scale'));$attr->set_name('pa_scale');$attr->set_options($term_ids);$attr->set_position(0);$attr->set_visible(true);$attr->set_variation(true);$p->set_attributes([$attr]);}
+  if($variation_attrs){$attrs=[];foreach($variation_attrs as $pos=>$va){$attr=new WC_Product_Attribute();if($va['taxonomy']==='pa_scale'){$term_ids=[];foreach($va['terms'] as $t){$term=get_term_by('slug',$t['slug'],'pa_scale');if($term)$term_ids[]=$term->term_id;}$attr->set_id(wc_attribute_taxonomy_id_by_name('scale'));$attr->set_name('pa_scale');$attr->set_options($term_ids);}else{$attr->set_id(0);$attr->set_name($va['name']);$attr->set_options(array_column($va['terms'],'name'));}$attr->set_position($pos);$attr->set_visible(true);$attr->set_variation(true);$attrs[]=$attr;}$p->set_attributes($attrs);}
   else{$price=$x['prices']['price']??'0';$minor=(int)($x['prices']['currency_minor_unit']??2);$p->set_regular_price((string)ss_money_from_api($price,$minor));}
-  $id=$p->save();update_post_meta($id,'_ss_playground_product',1);update_post_meta($id,'_ss_source_id',$source_id);update_post_meta($id,'_ss_source_permalink',$x['permalink']??'');
+  $id=$p->save();$tagids=[];foreach(($x['tags']??[]) as $tag){$slug=$tag['slug']??sanitize_title($tag['name']??'');$term=get_term_by('slug',$slug,'product_tag');if(!$term&&!empty($tag['name'])){$made=wp_insert_term($tag['name'],'product_tag',['slug'=>$slug]);if(!is_wp_error($made))$term=get_term($made['term_id'],'product_tag');}if($term&&!is_wp_error($term))$tagids[]=$term->term_id;}if($tagids)wp_set_object_terms($id,$tagids,'product_tag');update_post_meta($id,'_ss_playground_product',1);update_post_meta($id,'_ss_source_id',$source_id);update_post_meta($id,'_ss_source_permalink',$x['permalink']??'');
   $imgs=[];foreach(($x['images']??[]) as $im)if(!empty($im['src']))$imgs[]=$im['src'];update_post_meta($id,'_ss_external_gallery',$imgs);if($imgs)update_post_meta($id,'_ss_external_image',$imgs[0]);
   $price=$x['prices']['price']??'0';$minor=(int)($x['prices']['currency_minor_unit']??2);$range=$x['prices']['price_range']??[];$min=$range['min_amount']??$price;$max=$range['max_amount']??$price;update_post_meta($id,'_ss_price_min',ss_money_from_api($min,$minor));update_post_meta($id,'_ss_price_max',ss_money_from_api($max,$minor));update_post_meta($id,'_ss_scales',$scales);
-  if($scales){
-   $source_vars=$vars_by_parent[$source_id]??[];$created=0;
-   foreach($source_vars as $sv){$scale='';foreach(($sv['attributes']??[]) as $a)if(($a['taxonomy']??'')==='pa_scale')foreach(($a['terms']??[]) as $t)if(!empty($t['name'])){$scale=$t['name'];break 2;}if(!$scale)continue;$vp=new WC_Product_Variation();$vp->set_parent_id($id);$vp->set_attributes(['pa_scale'=>sanitize_title($scale)]);$vminor=(int)($sv['prices']['currency_minor_unit']??$minor);$vprice=ss_money_from_api($sv['prices']['price']??$min,$vminor);$vp->set_regular_price((string)$vprice);$vp->set_stock_status(!empty($sv['is_in_stock'])?'instock':'outofstock');$vid=$vp->save();update_post_meta($vid,'_ss_source_variation_id',(int)($sv['id']??0));$created++;}
+  if($variation_attrs){
+   $source_vars=$vars_by_parent[$source_id]??[];$source_by_id=[];foreach($source_vars as $sv)$source_by_id[(int)($sv['id']??0)]=$sv;$created=0;
+   foreach(($x['variations']??[]) as $pv){$sid=(int)($pv['id']??0);$sv=$source_by_id[$sid]??[];$vattrs=[];foreach(($pv['attributes']??[]) as $pa){$name=$pa['name']??'';$value=$pa['value']??'';if($name===''||$value==='')continue;$matched=null;foreach($variation_attrs as $va)if(strcasecmp($va['name'],$name)===0){$matched=$va;break;}if(!$matched)continue;$key=$matched['taxonomy']==='pa_scale'?'pa_scale':sanitize_title($matched['name']);$vattrs[$key]=$matched['taxonomy']==='pa_scale'?sanitize_title($value):$value;}if(!$vattrs)continue;$vp=new WC_Product_Variation();$vp->set_parent_id($id);$vp->set_attributes($vattrs);$vminor=(int)($sv['prices']['currency_minor_unit']??$minor);$vprice=ss_money_from_api($sv['prices']['price']??$min,$vminor);$vp->set_regular_price((string)$vprice);$vp->set_stock_status(isset($sv['is_in_stock'])&&!$sv['is_in_stock']?'outofstock':'instock');$vid=$vp->save();update_post_meta($vid,'_ss_source_variation_id',$sid);$created++;}
    if(!$created)update_post_meta($id,'_ss_variations_unresolved',1);else delete_post_meta($id,'_ss_variations_unresolved');
    WC_Product_Variable::sync($id);
   }
