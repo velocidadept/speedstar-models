@@ -54,7 +54,7 @@ function ss_workshop_card($post_id){
  echo '<article class="workshop-card"><a href="'.esc_url(get_permalink($post_id)).'"><div class="workshop-media">'.($img?'<img loading="lazy" decoding="async" src="'.esc_url($img).'" alt="'.esc_attr(get_the_title($post_id)).'">':'<span>'.esc_html(strtoupper($type)).'</span>').'</div><div class="workshop-card-copy"><div class="eyebrow">'.esc_html($type).'</div><h3>'.esc_html(get_the_title($post_id)).'</h3><p>'.esc_html(get_the_excerpt($post_id)).'</p></div></a></article>';
 }
 function ss_seed_workshop(){
- if(get_option('ss_workshop_seed_version')==='v1')return;
+ if(get_option('ss_workshop_seed_version')==='v2')return;
  $types=['tutorials'=>'Tutorials','kit-reviews'=>'Kit Reviews','techniques'=>'Techniques','new-kits'=>'New Kits'];foreach($types as $slug=>$name)if(!term_exists($slug,'workshop_type'))wp_insert_term($name,'workshop_type',['slug'=>$slug]);
  $articles=[
  ['How to Remove Old Decals Without Damaging the Paint','remove-old-decals','tutorials','Decals','Beginner','20–40 min','A careful starting guide to lifting unwanted decals while protecting the finish underneath.','Start with the least aggressive method. Test an inconspicuous area first, soften the decal gradually, and avoid scraping with hard tools. Painted and clear-coated surfaces react differently, so patience matters more than force.'],
@@ -65,6 +65,6 @@ function ss_seed_workshop(){
  ['Tamiya BMW 320i Racing 1:24: First Look','tamiya-bmw-320i-racing-first-look','new-kits','Tamiya · BMW','Intermediate','','Tamiya’s 1:24 BMW 320i Racing brings the 1977 competition car back with engine and cockpit detail.','Tamiya lists item 24379 as a limited-edition 1:24 kit. The official specification highlights the overfenders, spoiler and wing, inline-four DOHC engine, roll-cage interior and Cartograf decals. This article is deliberately presented as a First Look until a physical build can support judgements about fit and mould quality.']
  ];
  foreach($articles as $a){if(get_page_by_path($a[1],OBJECT,'workshop'))continue;$id=wp_insert_post(['post_type'=>'workshop','post_status'=>'publish','post_title'=>$a[0],'post_name'=>$a[1],'post_excerpt'=>$a[6],'post_content'=>'<p>'.$a[7].'</p><h2>Workshop notes</h2><p>This article is part of the Speedstar Workshop and will be expanded with step-by-step photography, measurements and build observations where appropriate.</p>']);if($id&&!is_wp_error($id)){wp_set_object_terms($id,$a[2],'workshop_type');wp_set_object_terms($id,array_map('trim',explode('·',$a[3])),'workshop_brand');update_post_meta($id,'_ss_difficulty',$a[4]);update_post_meta($id,'_ss_build_time',$a[5]);}}
- update_option('ss_workshop_seed_version','v1');flush_rewrite_rules(false);
+ update_option('ss_workshop_seed_version','v2');flush_rewrite_rules(false);
 }
 if(get_option('ss_playground_seed')==='1')add_action('wp_loaded','ss_seed_workshop',30);
