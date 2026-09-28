@@ -13,7 +13,7 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
   <div class="crumb ss-product-crumb">Home / <?php echo esc_html(implode(' / ',$cat_names)); ?> / <?php echo esc_html($p->get_name()); ?></div>
   <div class="product-layout">
     <section class="ss-gallery">
-      <div class="gallery-main"><?php if($img): ?><img id="ss-main-product-image" src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($p->get_name()); ?>"><?php endif; ?></div>
+      <div class="gallery-main" title="Click to enlarge"><?php if($img): ?><img id="ss-main-product-image" tabindex="0" role="button" aria-label="Enlarge product image" src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($p->get_name()); ?>"><?php endif; ?></div>
       <div class="thumbs"><?php foreach(array_slice($gallery,0,4) as $g): ?><button class="thumb" type="button" data-image="<?php echo esc_url($g); ?>"><img loading="lazy" src="<?php echo esc_url($g); ?>" alt=""></button><?php endforeach; ?></div>
     </section>
     <section class="buy">
@@ -33,11 +33,13 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
     </section>
   </div>
 </div>
-<section class="section light-section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">You may also like</div><h2>RELATED PRODUCTS.</h2></div></div><div class="products">
+<section class="section related-section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">You may also like</div><h2>RELATED PRODUCTS.</h2></div></div><div class="products">
 <?php foreach(wc_get_products(['limit'=>3,'exclude'=>[$id],'status'=>'publish']) as $rp) ss_card_real($rp); ?>
 </div></div></section>
+<div class="ss-lightbox" role="dialog" aria-modal="true" aria-label="Product image viewer"><button class="ss-lightbox-close" type="button" aria-label="Close image">×</button><img src="" alt=""></div>
 </main>
 <script>
+document.getElementById('ss-main-product-image')?.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')this.click();});
 document.querySelectorAll('.ss-gallery .thumb[data-image]').forEach(function(btn){btn.addEventListener('click',function(){var main=document.getElementById('ss-main-product-image');if(main){main.src=this.dataset.image;document.querySelectorAll('.ss-gallery .thumb').forEach(function(x){x.classList.remove('active')});this.classList.add('active');}});});
 </script>
 <?php get_footer(); ?>
