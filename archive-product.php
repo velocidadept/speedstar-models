@@ -3,8 +3,7 @@ defined('ABSPATH')||exit;get_header();
 $title=is_shop()?'SHOP':single_term_title('',false);
 $current=isset($_GET['ss_scale'])?sanitize_title(wp_unslash($_GET['ss_scale'])):'';
 $show_scales=!(is_product_category('t-shirts'));
-$scales=['124'=>'1:24','118'=>'1:18'];
-if(is_product_category('engines'))$scales+=['112'=>'1:12','110'=>'1:10','18'=>'1:8'];
+$scales=[];$scale_terms=get_terms(['taxonomy'=>'pa_scale','hide_empty'=>true]);if(!is_wp_error($scale_terms)){foreach($scale_terms as $term)$scales[$term->slug]=$term->name;uasort($scales,function($a,$b){$da=(int)substr(strrchr($a,':'),1);$db=(int)substr(strrchr($b,':'),1);return $db<=>$da;});}
 ?>
 <main><section class="pagehero"><div class="wrap"><div class="crumb">Home / <?php echo esc_html($title); ?></div><h1><?php echo esc_html(strtoupper($title)); ?>.</h1><?php if(is_product_category()&&term_description()): ?><div class="ss-lead"><?php echo wp_kses_post(term_description()); ?></div><?php endif; ?></div></section>
 <section class="section"><div class="wrap">
