@@ -17,7 +17,7 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
       <div class="thumbs"><?php foreach(array_slice($gallery,0,4) as $g): ?><button class="thumb" type="button" data-image="<?php echo esc_url($g); ?>"><img loading="lazy" src="<?php echo esc_url($g); ?>" alt=""></button><?php endforeach; ?></div>
     </section>
     <section class="buy">
-      <div class="eyebrow"><?php echo esc_html(implode(' · ',$cat_names)); ?> · Resin kit</div>
+      <div class="eyebrow"><?php echo esc_html(implode(' · ',$cat_names)); ?></div>
       <h1><?php echo esc_html($p->get_name()); ?></h1>
       <div class="buy-price"><?php echo esc_html(ss_price_range_html($p)); ?></div>
       <div class="stock <?php echo $p->is_in_stock()?'':'out'; ?>">● <?php echo esc_html($p->is_in_stock()?'In stock':'Out of stock'); ?></div>
@@ -28,8 +28,8 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
       <?php else: ?>
         <div class="ss-variation-warning">Scale pricing is still being resolved from the source catalogue.</div>
       <?php endif; ?>
-      <div class="bullets"><?php echo wp_kses_post(wpautop($p->get_short_description())); ?></div>
-      <div class="accordion"><div>Product Details <b>+</b></div><div>What's Included <b>+</b></div><div>Assembly & Painting <b>+</b></div><div>Shipping & Returns <b>+</b></div></div>
+      <?php if($p->get_short_description()): ?><div class="bullets"><?php echo wp_kses_post(wpautop($p->get_short_description())); ?></div><?php endif; ?>
+      <?php if($p->get_description()): ?><div class="accordion"><details><summary>Product Details <b>+</b></summary><div class="accordion-copy"><?php echo wp_kses_post(wpautop($p->get_description())); ?></div></details></div><?php endif; ?>
     </section>
   </div>
 </div>
