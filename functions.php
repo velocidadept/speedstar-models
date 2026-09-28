@@ -1,6 +1,6 @@
 <?php
-add_action('after_setup_theme',function(){add_theme_support('title-tag');add_theme_support('woocommerce');add_theme_support('post-thumbnails');});
-add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.6.1');wp_enqueue_script('speedstar-storefront',get_template_directory_uri().'/assets/js/storefront.js',[],'0.6.1',true);if(is_product())wp_enqueue_script('wc-add-to-cart-variation');});
+add_action('after_setup_theme',function(){add_theme_support('title-tag');add_theme_support('woocommerce');add_theme_support('post-thumbnails');add_theme_support('html5',['search-form','gallery','caption','style','script']);});
+add_action('wp_enqueue_scripts',function(){$v=wp_get_theme()->get('Version');wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],$v);wp_enqueue_script('speedstar-storefront',get_template_directory_uri().'/assets/js/storefront.js',[],$v,true);if(is_product())wp_enqueue_script('wc-add-to-cart-variation');});
 add_filter('woocommerce_enqueue_styles','__return_empty_array');
 
 function ss_img($id){
@@ -26,12 +26,12 @@ function ss_price_range($p){$id=$p->get_id();$min=get_post_meta($id,'_ss_price_m
 function ss_price_range_html($p){[$min,$max]=ss_price_range($p);return $min===$max?'€'.ss_money($min):'€'.ss_money($min).' – €'.ss_money($max);}
 function ss_card_real($p){if(!$p)return;$id=$p->get_id();$img=ss_img($id);$cats=wp_get_post_terms($id,'product_cat',['fields'=>'names']);$cat=is_wp_error($cats)?'':implode(' · ',$cats);$scales=ss_scales($p);$scale_data=implode('|',array_map('sanitize_title',$scales));echo '<article class="product" data-scales="'.esc_attr($scale_data).'"><a href="'.esc_url(get_permalink($id)).'"><div class="ph">'.($img?'<img class="realimg" loading="lazy" decoding="async" src="'.esc_url($img).'" alt="'.esc_attr($p->get_name()).'">':'<span class="no-image">IMAGE COMING SOON</span>').'</div><div class="pi"><h3>'.esc_html($p->get_name()).'</h3><div class="meta">'.esc_html($cat).'</div><div class="price">'.esc_html(ss_price_range_html($p)).'</div></div></a></article>';}
 
-add_action('after_setup_theme',function(){add_theme_support('html5',['search-form','gallery','caption','style','script']);});
+
 add_filter('document_title_separator',function(){return '·';});
 add_action('wp_head',function(){if(is_front_page())echo '<meta name="theme-color" content="#0b0c0e">';},1);
 
 /* 0.6 storefront helpers: real Woo archives and server-side scale filtering. */
-function ss_shop_url(){return function_exists('wc_get_page_permalink')?wc_get_page_permalink('shop'):home_url('/shop/');}
+function ss_shop_url(){if(function_exists('wc_get_page_permalink')){$url=wc_get_page_permalink('shop');if($url)return $url;}return home_url('/shop/');}
 function ss_category_url($slug){$term=get_term_by('slug',$slug,'product_cat');return $term&&!is_wp_error($term)?get_term_link($term):home_url('/product-category/'.$slug.'/');}
 add_action('pre_get_posts',function($q){if(is_admin()||!$q->is_main_query()||!(is_shop()||is_product_category()))return;$scale=isset($_GET['ss_scale'])?sanitize_title(wp_unslash($_GET['ss_scale'])):'';if(!$scale)return;$tax=(array)$q->get('tax_query');$tax[]=['taxonomy'=>'pa_scale','field'=>'slug','terms'=>[$scale]];$q->set('tax_query',$tax);});
 
@@ -48,9 +48,10 @@ add_action('init',function(){
 });
 function ss_workshop_url(){return get_post_type_archive_link('workshop')?:home_url('/workshop/');}
 function ss_workshop_meta($id,$key,$fallback=''){ $v=get_post_meta($id,$key,true);return $v!==''?$v:$fallback; }
+function ss_workshop_image($id,$size='large'){$img=get_the_post_thumbnail_url($id,$size);return $img?:get_post_meta($id,'_ss_remote_image',true);}
 function ss_workshop_card($post_id){
  $types=wp_get_post_terms($post_id,'workshop_type',['fields'=>'names']);$type=!is_wp_error($types)&&$types?$types[0]:'Workshop';
- $img=get_the_post_thumbnail_url($post_id,'large');if(!$img)$img=get_post_meta($post_id,'_ss_remote_image',true);
+ $img=ss_workshop_image($post_id);
  echo '<article class="workshop-card"><a href="'.esc_url(get_permalink($post_id)).'"><div class="workshop-media">'.($img?'<img loading="lazy" decoding="async" src="'.esc_url($img).'" alt="'.esc_attr(get_the_title($post_id)).'">':'<span>'.esc_html(strtoupper($type)).'</span>').'</div><div class="workshop-card-copy"><div class="eyebrow">'.esc_html($type).'</div><h3>'.esc_html(get_the_title($post_id)).'</h3><p>'.esc_html(get_the_excerpt($post_id)).'</p></div></a></article>';
 }
 function ss_seed_workshop(){
@@ -124,3 +125,10 @@ HTML
  update_option('ss_workshop_seed_version','v3');flush_rewrite_rules(false);
 }
 if(get_option('ss_playground_seed')==='1')add_action('wp_loaded','ss_seed_workshop',30);
+
+/* Product-first related products: use WooCommerce relevance instead of arbitrary catalogue items. */
+function ss_related_products($product_id,$limit=3){
+ $ids=function_exists('wc_get_related_products')?wc_get_related_products($product_id,$limit):[];
+ if(!$ids)$ids=wc_get_products(['limit'=>$limit,'exclude'=>[$product_id],'status'=>'publish','return'=>'ids','orderby'=>'date','order'=>'DESC']);
+ return array_values(array_filter(array_map('wc_get_product',$ids)));
+}
