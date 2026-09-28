@@ -1,6 +1,6 @@
 <?php
 add_action('after_setup_theme',function(){add_theme_support('title-tag');add_theme_support('woocommerce');add_theme_support('post-thumbnails');});
-add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.4.0');if(is_product()){wp_enqueue_script('wc-add-to-cart-variation');}});
+add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.5.0');wp_enqueue_script('speedstar-storefront',get_template_directory_uri().'/assets/js/storefront.js',[],'0.5.0',true);if(is_product())wp_enqueue_script('wc-add-to-cart-variation');});
 add_filter('woocommerce_enqueue_styles','__return_empty_array');
 
 function ss_img($id){
@@ -86,4 +86,8 @@ add_action('wp_loaded','ss_import_source_catalogue',30);
 /* Shared product-card renderer used by archive and single-product templates. */
 function ss_price_range($p){$id=$p->get_id();$min=get_post_meta($id,'_ss_price_min',true);$max=get_post_meta($id,'_ss_price_max',true);if($min===''||$min===false)$min=(float)$p->get_price();if($max===''||$max===false)$max=$min;return [(float)$min,(float)$max];}
 function ss_price_range_html($p){[$min,$max]=ss_price_range($p);return $min===$max?'€'.ss_money($min):'€'.ss_money($min).' – €'.ss_money($max);}
-function ss_card_real($p){if(!$p)return;$id=$p->get_id();$img=ss_img($id);$cats=wp_get_post_terms($id,'product_cat',['fields'=>'names']);$cat=is_wp_error($cats)?'':implode(' · ',$cats);echo '<article class="product"><a href="'.esc_url(get_permalink($id)).'"><div class="ph">'.($img?'<img class="realimg" loading="lazy" decoding="async" src="'.esc_url($img).'" alt="'.esc_attr($p->get_name()).'">':'').'</div><div class="pi"><h3>'.esc_html($p->get_name()).'</h3><div class="meta">'.esc_html($cat).'</div><div class="price">'.esc_html(ss_price_range_html($p)).'</div></div></a></article>';}
+function ss_card_real($p){if(!$p)return;$id=$p->get_id();$img=ss_img($id);$cats=wp_get_post_terms($id,'product_cat',['fields'=>'names']);$cat=is_wp_error($cats)?'':implode(' · ',$cats);$scales=ss_scales($p);$scale_data=implode('|',array_map('sanitize_title',$scales));echo '<article class="product" data-scales="'.esc_attr($scale_data).'"><a href="'.esc_url(get_permalink($id)).'"><div class="ph">'.($img?'<img class="realimg" loading="lazy" decoding="async" src="'.esc_url($img).'" alt="'.esc_attr($p->get_name()).'">':'<span class="no-image">IMAGE COMING SOON</span>').'</div><div class="pi"><h3>'.esc_html($p->get_name()).'</h3><div class="meta">'.esc_html($cat).'</div><div class="price">'.esc_html(ss_price_range_html($p)).'</div></div></a></article>';}
+
+add_action('after_setup_theme',function(){add_theme_support('html5',['search-form','gallery','caption','style','script']);});
+add_filter('document_title_separator',function(){return '·';});
+add_action('wp_head',function(){if(is_front_page())echo '<meta name="theme-color" content="#0b0c0e">';},1);
