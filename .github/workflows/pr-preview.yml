@@ -26,7 +26,8 @@ jobs:
               },
               "siteOptions": {
                 "blogname": "Speedstar Models Dev",
-                "blogdescription": "Scale Model Studio"
+                "blogdescription": "Scale Model Studio",
+                "ss_playground_seed": "1"
               },
               "steps": [
                 {
