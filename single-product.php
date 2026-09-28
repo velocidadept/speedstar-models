@@ -21,7 +21,7 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
       <h1><?php echo esc_html($p->get_name()); ?></h1>
       <div class="buy-price"><?php echo esc_html(ss_price_range_html($p)); ?></div>
       <div class="stock <?php echo $p->is_in_stock()?'':'out'; ?>">● <?php echo esc_html($p->is_in_stock()?'In stock':'Out of stock'); ?></div>
-      <?php if($p->is_type('variable') && $p->get_available_variations()): ?>
+      <?php if($p->is_type('variable')): ?>
         <?php woocommerce_variable_add_to_cart(); ?>
       <?php elseif($p->is_type('simple')): ?>
         <?php woocommerce_simple_add_to_cart(); ?>
