@@ -74,7 +74,7 @@ function ss_import_source_catalogue(){
   if($scales){
    $source_vars=$vars_by_parent[$source_id]??[];$created=0;
    foreach($source_vars as $sv){$scale='';foreach(($sv['attributes']??[]) as $a)if(($a['taxonomy']??'')==='pa_scale')foreach(($a['terms']??[]) as $t)if(!empty($t['name'])){$scale=$t['name'];break 2;}if(!$scale)continue;$vp=new WC_Product_Variation();$vp->set_parent_id($id);$vp->set_attributes(['pa_scale'=>sanitize_title($scale)]);$vminor=(int)($sv['prices']['currency_minor_unit']??$minor);$vprice=ss_money_from_api($sv['prices']['price']??$min,$vminor);$vp->set_regular_price((string)$vprice);$vp->set_stock_status(!empty($sv['is_in_stock'])?'instock':'outofstock');$vid=$vp->save();update_post_meta($vid,'_ss_source_variation_id',(int)($sv['id']??0));$created++;}
-   if(!$created){$count=count($scales);$lo=ss_money_from_api($min,$minor);$hi=ss_money_from_api($max,$minor);foreach($scales as $n=>$scale){$vp=new WC_Product_Variation();$vp->set_parent_id($id);$vp->set_attributes(['pa_scale'=>sanitize_title($scale)]);$vp->set_regular_price((string)($count>1?$lo+(($hi-$lo)*$n/($count-1)):$lo));$vp->set_stock_status($p->is_in_stock()?'instock':'outofstock');$vp->save();}}
+   if(!$created)update_post_meta($id,'_ss_variations_unresolved',1);else delete_post_meta($id,'_ss_variations_unresolved');
    WC_Product_Variable::sync($id);
   }
  }
