@@ -58,6 +58,7 @@ function ss_import_source_catalogue(){
    WC_Product_Variable::sync($id);
   }
  }
+ if(!get_page_by_path('about'))wp_insert_post(['post_title'=>'About','post_name'=>'about','post_status'=>'publish','post_type'=>'page']);
  update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));flush_rewrite_rules(false);
 }
 add_action('wp_loaded','ss_import_source_catalogue',30);
