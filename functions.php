@@ -1,6 +1,6 @@
 <?php
 add_action('after_setup_theme',function(){add_theme_support('title-tag');add_theme_support('woocommerce');add_theme_support('post-thumbnails');});
-add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.4.0');});
+add_action('wp_enqueue_scripts',function(){wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],'0.4.0');if(is_product()){wp_enqueue_script('wc-add-to-cart-variation');}});
 add_filter('woocommerce_enqueue_styles','__return_empty_array');
 
 function ss_img($id){
