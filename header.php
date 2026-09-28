@@ -4,7 +4,7 @@
 <header class="site-head"><div class="wrap head">
 <a class="brand" href="<?php echo esc_url(home_url('/')); ?>" aria-label="Speedstar Models home">SPEED<b>STAR</b></a>
 <nav class="desktop-nav" aria-label="Primary navigation">
-<a href="<?php echo esc_url(home_url('/?ss=bodykits')); ?>">BODYKITS</a><a href="<?php echo esc_url(home_url('/?ss=wheels')); ?>">WHEELS</a><a href="<?php echo esc_url(home_url('/?ss=engines')); ?>">ENGINES</a><a href="<?php echo esc_url(home_url('/?ss=merch')); ?>">MERCH</a><a href="<?php echo esc_url(home_url('/?ss=about')); ?>">ABOUT</a>
+<a href="<?php echo esc_url(ss_category_url('bodykits')); ?>">BODYKITS</a><a href="<?php echo esc_url(ss_category_url('wheels')); ?>">WHEELS</a><a href="<?php echo esc_url(ss_category_url('engines')); ?>">ENGINES</a><a href="<?php echo esc_url(ss_category_url('t-shirts')); ?>">MERCH</a><a href="<?php echo esc_url(home_url('/about/')); ?>">ABOUT</a>
 </nav>
 <div class="tools">
 <button class="tool ss-search-toggle" type="button" aria-label="Search products" aria-expanded="false">⌕</button>
@@ -12,5 +12,5 @@
 <button class="tool menu-toggle" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
 </div></div>
 <div class="search-panel"><div class="wrap"><form role="search" method="get" action="<?php echo esc_url(home_url('/')); ?>"><input type="hidden" name="post_type" value="product"><label class="screen-reader-text" for="ss-search">Search products</label><input id="ss-search" name="s" type="search" placeholder="Search S13, Enkei, Cosworth…" autocomplete="off"><button type="submit">SEARCH</button></form></div></div>
-<div class="mobile-menu"><div class="wrap"><a href="<?php echo esc_url(home_url('/?ss=bodykits')); ?>">BODYKITS</a><a href="<?php echo esc_url(home_url('/?ss=wheels')); ?>">WHEELS</a><a href="<?php echo esc_url(home_url('/?ss=engines')); ?>">ENGINES</a><a href="<?php echo esc_url(home_url('/?ss=merch')); ?>">MERCH</a><a href="<?php echo esc_url(home_url('/?ss=about')); ?>">ABOUT</a></div></div>
+<div class="mobile-menu"><div class="wrap"><a href="<?php echo esc_url(ss_category_url('bodykits')); ?>">BODYKITS</a><a href="<?php echo esc_url(ss_category_url('wheels')); ?>">WHEELS</a><a href="<?php echo esc_url(ss_category_url('engines')); ?>">ENGINES</a><a href="<?php echo esc_url(ss_category_url('t-shirts')); ?>">MERCH</a><a href="<?php echo esc_url(home_url('/about/')); ?>">ABOUT</a></div></div>
 </header>
