@@ -1,7 +1,9 @@
 <?php
 /* Playground-only catalogue mirror. Never loaded on the production storefront. */
 function ss_source_get($url){
- $r=wp_remote_get($url,['timeout'=>45,'headers'=>['Accept'=>'application/json']]);
+ $allowed='https://speedstarmodels.com/wp-json/wc/store/v1/';
+ if(strncmp($url,$allowed,strlen($allowed))!==0)return [];
+ $r=wp_safe_remote_get($url,['timeout'=>45,'redirection'=>2,'limit_response_size'=>8*MB_IN_BYTES,'headers'=>['Accept'=>'application/json']]);
  if(is_wp_error($r)||wp_remote_retrieve_response_code($r)!==200)return [];
  $x=json_decode(wp_remote_retrieve_body($r),true);
  return is_array($x)?$x:[];
