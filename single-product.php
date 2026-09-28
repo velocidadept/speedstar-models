@@ -21,8 +21,13 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
       <h1><?php echo esc_html($p->get_name()); ?></h1>
       <div class="buy-price"><?php echo esc_html(ss_price_range_html($p)); ?></div>
       <div class="stock <?php echo $p->is_in_stock()?'':'out'; ?>">● <?php echo esc_html($p->is_in_stock()?'In stock':'Out of stock'); ?></div>
-      <?php if($scales): ?><div class="scale-title">Select scale</div><div class="scales"><?php foreach($scales as $s): ?><button class="scale" type="button"><?php echo esc_html($s); ?></button><?php endforeach; ?></div><?php endif; ?>
-      <div class="addrow"><input class="qty" type="number" min="1" value="1"><button class="add" type="button">ADD TO CART</button></div>
+      <?php if($p->is_type('variable') && $p->get_available_variations()): ?>
+        <?php woocommerce_variable_add_to_cart(); ?>
+      <?php elseif($p->is_type('simple')): ?>
+        <?php woocommerce_simple_add_to_cart(); ?>
+      <?php else: ?>
+        <div class="ss-variation-warning">Scale pricing is still being resolved from the source catalogue.</div>
+      <?php endif; ?>
       <div class="bullets"><?php echo wp_kses_post(wpautop($p->get_short_description())); ?></div>
       <div class="accordion"><div>Product Details <b>+</b></div><div>What's Included <b>+</b></div><div>Assembly & Painting <b>+</b></div><div>Shipping & Returns <b>+</b></div></div>
     </section>
