@@ -33,7 +33,7 @@ function ss_import_source_catalogue(){
  $base='https://speedstarmodels.com/wp-json/wc/store/v1';
  $items=ss_source_products($base); if(!$items)return;
  $variations=ss_source_variations($base);
- $vars_by_parent=[];
+ $vars_by_parent=[];$expected_variations=0;$created_variations=0;$variation_mismatches=[];
  foreach($variations as $v){$pid=(int)($v['parent']??0);if($pid)$vars_by_parent[$pid][]=$v;}
  $old=wc_get_products(['limit'=>-1,'status'=>['publish','draft','private']]);
  foreach($old as $op){if(get_post_meta($op->get_id(),'_ss_playground_product',true))wp_delete_post($op->get_id(),true);}
@@ -59,14 +59,15 @@ function ss_import_source_catalogue(){
   $imgs=[];foreach(($x['images']??[]) as $im)if(!empty($im['src']))$imgs[]=$im['src'];update_post_meta($id,'_ss_external_gallery',$imgs);if($imgs)update_post_meta($id,'_ss_external_image',$imgs[0]);
   $price=$x['prices']['price']??'0';$minor=(int)($x['prices']['currency_minor_unit']??2);$range=$x['prices']['price_range']??[];$min=$range['min_amount']??$price;$max=$range['max_amount']??$price;update_post_meta($id,'_ss_price_min',ss_money_from_api($min,$minor));update_post_meta($id,'_ss_price_max',ss_money_from_api($max,$minor));update_post_meta($id,'_ss_scales',$scales);
   if($variation_attrs){
+   $expected_for_product=count($x['variations']??[]);$expected_variations+=$expected_for_product;
    $source_vars=$vars_by_parent[$source_id]??[];$source_by_id=[];foreach($source_vars as $sv)$source_by_id[(int)($sv['id']??0)]=$sv;$created=0;
    foreach(($x['variations']??[]) as $pv){$sid=(int)($pv['id']??0);$sv=$source_by_id[$sid]??[];$vattrs=[];foreach(($pv['attributes']??[]) as $pa){$name=$pa['name']??'';$value=$pa['value']??'';if($name===''||$value==='')continue;$matched=null;foreach($variation_attrs as $va)if(strcasecmp($va['name'],$name)===0){$matched=$va;break;}if(!$matched)continue;$key=$matched['taxonomy']==='pa_scale'?'pa_scale':sanitize_title($matched['name']);$vattrs[$key]=$matched['taxonomy']==='pa_scale'?sanitize_title($value):$value;}if(!$vattrs)continue;$vp=new WC_Product_Variation();$vp->set_parent_id($id);$vp->set_status('publish');$vp->set_attributes($vattrs);$vminor=(int)($sv['prices']['currency_minor_unit']??$minor);$vprice=ss_money_from_api($sv['prices']['price']??$min,$vminor);$vp->set_regular_price((string)$vprice);$vp->set_price((string)$vprice);$vp->set_manage_stock(false);$vp->set_stock_status(isset($sv['is_in_stock'])&&!$sv['is_in_stock']?'outofstock':'instock');$vid=$vp->save();update_post_meta($vid,'_ss_source_variation_id',$sid);$created++;}
-   if(!$created)update_post_meta($id,'_ss_variations_unresolved',1);else delete_post_meta($id,'_ss_variations_unresolved');
+   $created_variations+=$created;if($created!==$expected_for_product){update_post_meta($id,'_ss_variations_unresolved',1);$variation_mismatches[]=['source_id'=>$source_id,'slug'=>$x['slug'],'expected'=>$expected_for_product,'created'=>$created];}else delete_post_meta($id,'_ss_variations_unresolved');
    WC_Product_Variable::sync($id);
   }
  }
  if(!get_page_by_path('about'))wp_insert_post(['post_title'=>'About','post_name'=>'about','post_status'=>'publish','post_type'=>'page']);
- update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
+ update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_expected_variations',$expected_variations);update_option('ss_catalogue_created_variations',$created_variations);update_option('ss_catalogue_variation_mismatches',$variation_mismatches);update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
 }
 add_action('wp_loaded','ss_import_source_catalogue',30);
 
