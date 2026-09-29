@@ -16,6 +16,29 @@ function ss_img($id){
  return get_the_post_thumbnail_url($id,'large') ?: '';
 }
 function ss_gallery($id){$x=get_post_meta($id,'_ss_external_gallery',true);return is_array($x)?$x:array_filter([ss_img($id)]);}
+
+/* Playground catalogue uses remote source images. Feed those images into both the
+ * Cart/Checkout Blocks Store API and the classic cart without downloading 100+
+ * source files into each ephemeral Playground instance. */
+function ss_cart_source_image_url($cart_item){
+ $parent_id=(int)($cart_item['product_id']??0);
+ if(!$parent_id && !empty($cart_item['data']) && $cart_item['data'] instanceof WC_Product){
+  $parent_id=(int)$cart_item['data']->get_parent_id();
+  if(!$parent_id)$parent_id=(int)$cart_item['data']->get_id();
+ }
+ return $parent_id?ss_img($parent_id):'';
+}
+add_filter('woocommerce_store_api_cart_item_images',function($images,$cart_item,$cart_item_key){
+ $url=ss_cart_source_image_url($cart_item);if(!$url)return $images;
+ $product_id=(int)($cart_item['product_id']??0);
+ $name=$product_id?get_the_title($product_id):'Product';
+ return [(object)['id'=>$product_id?:1,'src'=>$url,'thumbnail'=>$url,'srcset'=>'','sizes'=>'','name'=>$name,'alt'=>$name]];
+},10,3);
+add_filter('woocommerce_cart_item_thumbnail',function($thumbnail,$cart_item,$cart_item_key){
+ $url=ss_cart_source_image_url($cart_item);if(!$url)return $thumbnail;
+ $product_id=(int)($cart_item['product_id']??0);$name=$product_id?get_the_title($product_id):'Product';
+ return '<img src="'.esc_url($url).'" alt="'.esc_attr($name).'" class="attachment-woocommerce_thumbnail size-woocommerce_thumbnail" loading="lazy" decoding="async">';
+},10,3);
 function ss_scales($product){
  $x=get_post_meta($product->get_id(),'_ss_scales',true);
  if(is_array($x)) return $x;
