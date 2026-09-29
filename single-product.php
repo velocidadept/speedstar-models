@@ -1,8 +1,9 @@
 <?php
 defined('ABSPATH') || exit;
 get_header();
-global $post;
-$p=wc_get_product($post->ID);
+global $post, $product;
+$product=wc_get_product($post->ID);
+$p=$product;
 if(!$p){get_footer();return;}
 $id=$p->get_id(); $gallery=ss_gallery($id); $img=$gallery[0]??ss_img($id); $scales=ss_scales($p);
 [$min,$max]=ss_price_range($p);
