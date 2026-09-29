@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Speedstar Core
  * Description: Speedstar Models operational tools: secure CTT tracking and non-fiscal order/packing-slip PDFs.
- * Version: 1.0.0
+ * Version: 0.8.0
  */
 defined('ABSPATH') || exit;
 
@@ -51,7 +51,7 @@ final class Speedstar_Core {
   $t=isset($_POST['ss_ctt_tracking'])?strtoupper(preg_replace('/[^A-Za-z0-9]/','',sanitize_text_field(wp_unslash($_POST['ss_ctt_tracking'])))):'';
   $o->update_meta_data(self::TRACKING_META,$t);$o->save();
  }
- public static function tracking_url($t){return 'https://ctt.pt/t/'.rawurlencode(trim($t));}
+ public static function tracking_url($t){return 'https://ctt.pt/t/'.rawurlencode(preg_replace('/[^A-Za-z0-9]/','',trim((string)$t)));}
  public static function customer_tracking($order_id){$o=wc_get_order($order_id);if(!$o)return;$t=$o->get_meta(self::TRACKING_META);if(!$t)return;echo '<section class="woocommerce-order-details ss-order-tracking"><h2>Shipment tracking</h2><p><strong>CTT:</strong> '.esc_html($t).' &nbsp; <a class="button" target="_blank" rel="noopener noreferrer" href="'.esc_url(self::tracking_url($t)).'">Track shipment</a></p></section>';}
  public static function account_column($cols){$out=[];foreach($cols as $k=>$v){$out[$k]=$v;if($k==='order-status')$out['ss-tracking']='Tracking';}return $out;}
  public static function account_tracking_cell($o){$t=$o->get_meta(self::TRACKING_META);echo $t?'<a target="_blank" rel="noopener noreferrer" href="'.esc_url(self::tracking_url($t)).'">'.esc_html($t).'</a>':'—';}
@@ -65,22 +65,22 @@ final class Speedstar_Core {
   $u=wp_upload_dir();if(!empty($u['error']))return new WP_Error('upload_dir',$u['error']);
   $dir=trailingslashit($u['basedir']).'speedstar-private';
   if(!wp_mkdir_p($dir))return new WP_Error('mkdir','Unable to create document directory.');
-  if(!file_exists($dir.'/.htaccess'))@file_put_contents($dir.'/.htaccess',"Require all denied\nDeny from all\n");
-  if(!file_exists($dir.'/index.php'))@file_put_contents($dir.'/index.php',"<?php exit;\n");
+  if(!file_exists($dir.'/.htaccess'))@file_put_contents($dir.'/.htaccess',"Require all denied\nDeny from all\n",LOCK_EX);
+  if(!file_exists($dir.'/index.php'))@file_put_contents($dir.'/index.php',"<?php exit;\n",LOCK_EX);
   return $dir;
  }
- private static function pdf_path($o){$stored=$o->get_meta(self::PDF_META);if(!$stored)return false;$real=realpath($stored);$dir=self::storage_dir();if(is_wp_error($dir)||!$real)return false;$base=realpath($dir);return $base&&str_starts_with($real,$base.DIRECTORY_SEPARATOR)?$real:false;}
+ private static function pdf_path($o){$stored=$o->get_meta(self::PDF_META);if(!$stored)return false;$real=realpath($stored);$dir=self::storage_dir();if(is_wp_error($dir)||!$real)return false;$base=realpath($dir);return $base&&is_file($real)&&str_starts_with($real,$base.DIRECTORY_SEPARATOR)?$real:false;}
  public static function generate_pdf_action(){
   $id=absint($_GET['order_id']??0);check_admin_referer('ss_generate_pdf_'.$id);if(!$id||!current_user_can('edit_shop_order',$id))wp_die('Not allowed.',403);
   $o=wc_get_order($id);if(!$o)wp_die('Order not found.',404);$dir=self::storage_dir();if(is_wp_error($dir))wp_die(esc_html($dir->get_error_message()),500);
   $file=$dir.'/packing-slip-'.$id.'-'.wp_generate_password(20,false,false).'.pdf';$bytes=file_put_contents($file,self::build_pdf($o),LOCK_EX);
   if($bytes===false)wp_die('Could not write PDF.',500);$old=self::pdf_path($o);if($old&&$old!==$file)@unlink($old);
-  $o->update_meta_data(self::PDF_META,$file);$o->save();wp_safe_redirect(get_edit_post_link($id,'raw')?:admin_url('admin.php?page=wc-orders&action=edit&id='.$id));exit;
+  $o->update_meta_data(self::PDF_META,$file);$o->save();$back=wp_get_referer();if(!$back)$back=admin_url('admin.php?page=wc-orders&action=edit&id='.$id);wp_safe_redirect($back);exit;
  }
  public static function download_pdf_action(){
   $id=absint($_GET['order_id']??0);check_admin_referer('ss_download_pdf_'.$id);if(!$id||!current_user_can('edit_shop_order',$id))wp_die('Not allowed.',403);
   $o=wc_get_order($id);$file=$o?self::pdf_path($o):false;if(!$file||!is_readable($file))wp_die('PDF not found.',404);
-  nocache_headers();header('Content-Type: application/pdf');header('Content-Disposition: inline; filename="speedstar-order-'.absint($id).'-packing-slip.pdf"');header('Content-Length: '.filesize($file));readfile($file);exit;
+  nocache_headers();header('X-Content-Type-Options: nosniff');header('Content-Security-Policy: sandbox');header('Content-Type: application/pdf');header('Content-Disposition: inline; filename="speedstar-order-'.absint($id).'-packing-slip.pdf"');header('Content-Length: '.filesize($file));readfile($file);exit;
  }
  private static function clean($s){$s=wp_strip_all_tags((string)$s);$s=html_entity_decode($s,ENT_QUOTES|ENT_HTML5,'UTF-8');return function_exists('iconv')?(iconv('UTF-8','Windows-1252//TRANSLIT//IGNORE',$s)?:$s):$s;}
  private static function item_variants($item){
