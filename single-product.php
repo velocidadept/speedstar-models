@@ -10,16 +10,16 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
 ?>
 <main class="ss-single">
 <div class="wrap">
-  <div class="crumb ss-product-crumb">Home / <?php echo esc_html(implode(' / ',$cat_names)); ?> / <?php echo esc_html($p->get_name()); ?></div>
+  <nav class="crumb ss-product-crumb" aria-label="Breadcrumb"><a href="<?php echo esc_url(home_url('/')); ?>">Home</a> / <?php echo esc_html(implode(' / ',is_wp_error($cat_names)?[]:$cat_names)); ?> / <span aria-current="page"><?php echo esc_html($p->get_name()); ?></span></nav>
   <div class="product-layout">
     <section class="ss-gallery">
       <div class="gallery-main" title="Click to enlarge"><?php if($img): ?><img id="ss-main-product-image" tabindex="0" role="button" aria-label="Enlarge product image" src="<?php echo esc_url($img); ?>" alt="<?php echo esc_attr($p->get_name()); ?>"><?php endif; ?></div>
-      <div class="thumbs"><?php foreach(array_slice($gallery,0,4) as $g): ?><button class="thumb" type="button" data-image="<?php echo esc_url($g); ?>"><img loading="lazy" src="<?php echo esc_url($g); ?>" alt=""></button><?php endforeach; ?></div>
+      <div class="thumbs"><?php foreach(array_slice($gallery,0,8) as $i=>$g): ?><button class="thumb <?php echo $i===0?'active':''; ?>" type="button" data-image="<?php echo esc_url($g); ?>" aria-label="<?php echo esc_attr('View image '.($i+1).' of '.$p->get_name()); ?>"><img loading="lazy" decoding="async" src="<?php echo esc_url($g); ?>" alt=""></button><?php endforeach; ?></div>
     </section>
     <section class="buy">
-      <div class="eyebrow"><?php echo esc_html(implode(' · ',$cat_names)); ?></div>
+      <div class="eyebrow"><?php echo esc_html(implode(' · ',is_wp_error($cat_names)?[]:$cat_names)); ?></div>
       <h1><?php echo esc_html($p->get_name()); ?></h1>
-      <div class="buy-price"><?php echo esc_html(ss_price_range_html($p)); ?></div>
+      <div class="buy-price" aria-live="polite"><?php echo esc_html(ss_price_range_html($p)); ?></div>
       <div class="stock <?php echo $p->is_in_stock()?'':'out'; ?>">● <?php echo esc_html($p->is_in_stock()?'In stock':'Out of stock'); ?></div>
       <?php if($p->is_type('variable')): ?>
         <?php woocommerce_variable_add_to_cart(); ?>
@@ -36,7 +36,7 @@ $cat_names=wp_get_post_terms($id,'product_cat',['fields'=>'names']);
 <section class="section related-section"><div class="wrap"><div class="section-head"><div><div class="eyebrow">You may also like</div><h2>RELATED PRODUCTS.</h2></div></div><div class="products">
 <?php foreach(ss_related_products($id,3) as $rp) ss_card_real($rp); ?>
 </div></div></section>
-<div class="ss-lightbox" role="dialog" aria-modal="true" aria-label="Product image viewer"><button class="ss-lightbox-close" type="button" aria-label="Close image">×</button><img src="" alt=""></div>
+<div class="ss-lightbox" role="dialog" aria-modal="true" aria-label="Product image viewer" aria-hidden="true"><button class="ss-lightbox-close" type="button" aria-label="Close image">×</button><img src="" alt=""></div>
 </main>
 
 <?php get_footer(); ?>
