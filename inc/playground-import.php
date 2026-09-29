@@ -20,7 +20,6 @@ function ss_source_variations($base){
 }
 function ss_money_from_api($amount,$minor){return ((float)$amount)/pow(10,(int)$minor);}
 function ss_ensure_scale_taxonomy($scales){
- global $wpdb;
  $attr_id=wc_attribute_taxonomy_id_by_name('scale');
  if(!$attr_id){$attr_id=wc_create_attribute(['name'=>'Scale','slug'=>'scale','type'=>'select','order_by'=>'menu_order','has_archives'=>false]);delete_transient('wc_attribute_taxonomies');}
  if(!taxonomy_exists('pa_scale')) register_taxonomy('pa_scale','product',['hierarchical'=>false,'label'=>'Scale','query_var'=>true,'rewrite'=>false,'public'=>false,'show_ui'=>false]);
@@ -29,7 +28,7 @@ function ss_ensure_scale_taxonomy($scales){
 }
 function ss_import_source_catalogue(){
  if(!class_exists('WooCommerce'))return;
- $version='full-catalogue-v4-purchasable-variations';
+ $version='full-catalogue-v5-rc-data';
  if(get_option('ss_catalogue_seed_version')===$version)return;
  $base='https://speedstarmodels.com/wp-json/wc/store/v1';
  $items=ss_source_products($base); if(!$items)return;
@@ -67,7 +66,7 @@ function ss_import_source_catalogue(){
   }
  }
  if(!get_page_by_path('about'))wp_insert_post(['post_title'=>'About','post_name'=>'about','post_status'=>'publish','post_type'=>'page']);
- update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));flush_rewrite_rules(false);
+ update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
 }
 add_action('wp_loaded','ss_import_source_catalogue',30);
 
