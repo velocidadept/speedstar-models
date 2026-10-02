@@ -62,6 +62,33 @@ function ss_money($n){return function_exists('wc_price')?wp_strip_all_tags(wc_pr
 
 if(get_option('ss_playground_seed')==='1') require_once get_template_directory().'/inc/playground-import.php';
 
+/* Keep the Playground build self-contained: every image referenced by products
+ * or Workshop is mirrored into Media Library, retried if a remote host blips,
+ * and reattached to the content that uses it. */
+function ss_reconcile_media_library(){
+ if(get_option('ss_playground_seed')!=='1'||!function_exists('ss_media_source_key')||!function_exists('ss_import_media_image'))return;
+ $expected=get_option('ss_media_expected_sources',[]);$map=get_option('ss_media_source_map',[]);
+ if(!is_array($expected))$expected=[];if(!is_array($map))$map=[];
+ $missing=array_diff_key($expected,$map);$attempted=0;
+ foreach($missing as $key=>$url){if($attempted>=8)break;$attempted++;ss_import_media_image($url,'Speedstar Models image',0,'speedstar-media-'.substr(md5($key),0,12));}
+ $map=get_option('ss_media_source_map',[]);if(!is_array($map))$map=[];
+ foreach(wc_get_products(['limit'=>-1,'status'=>'publish']) as $product){
+  $sources=get_post_meta($product->get_id(),'_ss_external_gallery',true);if(!is_array($sources)||!$sources)continue;
+  $ids=[];foreach($sources as $src){$key=ss_media_source_key($src);if(!empty($map[$key])&&get_post((int)$map[$key]))$ids[]=(int)$map[$key];}
+  if($ids){$product->set_image_id($ids[0]);$product->set_gallery_image_ids(array_slice($ids,1));$product->save();}
+ }
+ $workshops=get_posts(['post_type'=>'workshop','post_status'=>'publish','numberposts'=>-1]);
+ foreach($workshops as $article){$src=get_post_meta($article->ID,'_ss_remote_image',true);if(!$src)continue;$key=ss_media_source_key($src);if(!empty($map[$key])&&get_post((int)$map[$key]))set_post_thumbnail($article->ID,(int)$map[$key]);}
+ $valid=[];foreach($expected as $key=>$url)if(!empty($map[$key])&&get_post((int)$map[$key]))$valid[$key]=$map[$key];
+ update_option('ss_media_expected_count',count($expected));update_option('ss_media_import_count',count($valid));update_option('ss_media_import_failures',count($expected)-count($valid));
+}
+if(get_option('ss_playground_seed')==='1')add_action('wp_loaded','ss_reconcile_media_library',80);
+add_action('admin_notices',function(){
+ if(get_option('ss_playground_seed')!=='1')return;$expected=(int)get_option('ss_media_expected_count',0);$done=(int)get_option('ss_media_import_count',0);
+ if(!$expected)return;$ok=$done===$expected;
+ echo '<div class="notice '.($ok?'notice-success':'notice-warning').'"><p><strong>Speedstar Media Library:</strong> '.esc_html($done).' / '.esc_html($expected).' build images imported'.($ok?' ✓':'. Remaining images will retry automatically.').'</p></div>';
+});
+
 /* Shared product-card renderer used by archive and single-product templates. */
 function ss_price_range($p){$id=$p->get_id();$min=get_post_meta($id,'_ss_price_min',true);$max=get_post_meta($id,'_ss_price_max',true);if($min===''||$min===false)$min=(float)$p->get_price();if($max===''||$max===false)$max=$min;return [(float)$min,(float)$max];}
 function ss_price_range_html($p){[$min,$max]=ss_price_range($p);return $min===$max?ss_money($min):ss_money($min).' – '.ss_money($max);}
@@ -168,6 +195,11 @@ HTML
 ]
  ];
  foreach($articles as $a){$existing=get_page_by_path($a[1],OBJECT,'workshop');$id=$existing?$existing->ID:0;$post=['post_type'=>'workshop','post_status'=>'publish','post_title'=>$a[0],'post_name'=>$a[1],'post_excerpt'=>$a[6],'post_content'=>$a[8]];if($id){$post['ID']=$id;$id=wp_update_post($post);}else{$id=wp_insert_post($post);}if($id&&!is_wp_error($id)){wp_set_object_terms($id,$a[2],'workshop_type');wp_set_object_terms($id,array_map('trim',explode('·',$a[3])),'workshop_brand');update_post_meta($id,'_ss_difficulty',$a[4]);update_post_meta($id,'_ss_build_time',$a[5]);update_post_meta($id,'_ss_remote_image',$a[7]);if(function_exists('ss_import_media_image')&&!get_post_thumbnail_id($id)){$aid=ss_import_media_image($a[7],$a[0],$id,'speedstar-workshop-'.$a[1]);if($aid)set_post_thumbnail($id,$aid);}}}
+ if(function_exists('ss_media_source_key')){
+  $expected=get_option('ss_media_expected_sources',[]);if(!is_array($expected))$expected=[];
+  foreach($articles as $a)$expected[ss_media_source_key($a[7])]=$a[7];
+  update_option('ss_media_expected_sources',$expected,false);
+ }
  update_option('ss_workshop_seed_version','v4-native-media');flush_rewrite_rules(false);
 }
 if(get_option('ss_playground_seed')==='1')add_action('wp_loaded','ss_seed_workshop',30);
