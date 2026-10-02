@@ -86,9 +86,11 @@ function ss_reconcile_media_library(){
 }
 if(get_option('ss_playground_seed')==='1')add_action('wp_loaded','ss_reconcile_media_library',80);
 add_action('admin_notices',function(){
- if(get_option('ss_playground_seed')!=='1')return;$expected=(int)get_option('ss_media_expected_count',0);$done=(int)get_option('ss_media_import_count',0);
- if(!$expected)return;$ok=$done===$expected;
- echo '<div class="notice '.($ok?'notice-success':'notice-warning').'"><p><strong>Speedstar Media Library:</strong> '.esc_html($done).' / '.esc_html($expected).' build images imported'.($ok?' ✓':'. Remaining images will retry automatically.').'</p></div>';
+ if(get_option('ss_playground_seed')!=='1')return;
+ $expected=(int)get_option('ss_media_expected_count',0);$done=(int)get_option('ss_media_import_count',0);
+ if($expected){$ok=$done===$expected;echo '<div class="notice '.($ok?'notice-success':'notice-warning').'"><p><strong>Speedstar Media Library:</strong> '.esc_html($done).' / '.esc_html($expected).' build images imported'.($ok?' ✓':'. Remaining images will retry automatically.').'</p></div>';}
+ $products=(int)get_option('ss_catalogue_seed_count',0);$expected_vars=(int)get_option('ss_catalogue_expected_variations',0);$created_vars=(int)get_option('ss_catalogue_created_variations',0);$mismatches=get_option('ss_catalogue_variation_mismatches',[]);
+ if($products){$catalogue_ok=$expected_vars===$created_vars&&empty($mismatches);echo '<div class="notice '.($catalogue_ok?'notice-success':'notice-error').'"><p><strong>Speedstar Catalogue:</strong> '.esc_html($products).' products · '.esc_html($created_vars).' / '.esc_html($expected_vars).' variations created'.($catalogue_ok?' ✓':'. Variation mismatches require attention.').'</p></div>';}
 });
 
 /* Shared product-card renderer used by archive and single-product templates. */
