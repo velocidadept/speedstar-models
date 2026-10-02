@@ -1,0 +1,1 @@
+<?php get_header(); ?><main class="ss-page"><section class="section"><div class="wrap"><?php while(have_posts()):the_post(); ?><div class="page-title"><div class="eyebrow">Speedstar Models</div><h1><?php the_title(); ?></h1></div><div class="page-content"><?php the_content(); ?></div><?php endwhile; ?></div></section></main><?php get_footer(); ?>
