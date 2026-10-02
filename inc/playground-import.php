@@ -61,7 +61,7 @@ function ss_import_source_catalogue(){
  $base='https://speedstarmodels.com/wp-json/wc/store/v1';
  $items=ss_source_products($base); if(!$items)return;
  $variations=ss_source_variations($base);
- $vars_by_parent=[];$expected_variations=0;$created_variations=0;$variation_mismatches=[];
+ $vars_by_parent=[];$expected_variations=0;$created_variations=0;$variation_mismatches=[];$expected_media_sources=[];
  foreach($variations as $v){$pid=(int)($v['parent']??0);if($pid)$vars_by_parent[$pid][]=$v;}
  $old=wc_get_products(['limit'=>-1,'status'=>['publish','draft','private']]);
  foreach($old as $op){if(get_post_meta($op->get_id(),'_ss_playground_product',true))wp_delete_post($op->get_id(),true);}
@@ -86,7 +86,7 @@ function ss_import_source_catalogue(){
   $id=$p->save();$tagids=[];foreach(($x['tags']??[]) as $tag){$slug=$tag['slug']??sanitize_title($tag['name']??'');$term=get_term_by('slug',$slug,'product_tag');if(!$term&&!empty($tag['name'])){$made=wp_insert_term($tag['name'],'product_tag',['slug'=>$slug]);if(!is_wp_error($made))$term=get_term($made['term_id'],'product_tag');}if($term&&!is_wp_error($term))$tagids[]=$term->term_id;}if($tagids)wp_set_object_terms($id,$tagids,'product_tag');update_post_meta($id,'_ss_playground_product',1);update_post_meta($id,'_ss_source_id',$source_id);update_post_meta($id,'_ss_source_permalink',$x['permalink']??'');
   $imgs=[];$media_ids=[];$media_failures=[];
   foreach(($x['images']??[]) as $idx=>$im){
-   if(empty($im['src']))continue;$src=$im['src'];$imgs[]=$src;
+   if(empty($im['src']))continue;$src=$im['src'];$imgs[]=$src;$expected_media_sources[ss_media_source_key($src)]=$src;
    $aid=ss_import_media_image($src,$p->get_name().' image '.($idx+1),$id,'speedstar-'.$x['slug'].'-'.str_pad((string)($idx+1),2,'0',STR_PAD_LEFT));
    if($aid)$media_ids[]=$aid;else $media_failures[]=$src;
   }
@@ -103,8 +103,9 @@ function ss_import_source_catalogue(){
   }
  }
  if(!get_page_by_path('about'))wp_insert_post(['post_title'=>'About','post_name'=>'about','post_status'=>'publish','post_type'=>'page']);
- $media_map=get_option('ss_media_source_map',[]);$media_failures=0;foreach(wc_get_products(['limit'=>-1,'status'=>'publish']) as $check_product){$fails=get_post_meta($check_product->get_id(),'_ss_media_import_failures',true);if(is_array($fails))$media_failures+=count($fails);}
- update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_expected_variations',$expected_variations);update_option('ss_catalogue_created_variations',$created_variations);update_option('ss_catalogue_variation_mismatches',$variation_mismatches);update_option('ss_media_import_count',is_array($media_map)?count($media_map):0);update_option('ss_media_import_failures',$media_failures);update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
+ $media_map=get_option('ss_media_source_map',[]);$missing_media=array_diff_key($expected_media_sources,is_array($media_map)?$media_map:[]);
+ update_option('ss_media_expected_sources',$expected_media_sources,false);update_option('ss_media_expected_count',count($expected_media_sources));update_option('ss_media_import_count',is_array($media_map)?count(array_intersect_key($media_map,$expected_media_sources)):0);update_option('ss_media_import_failures',count($missing_media));
+ update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_expected_variations',$expected_variations);update_option('ss_catalogue_created_variations',$created_variations);update_option('ss_catalogue_variation_mismatches',$variation_mismatches);update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
 }
 add_action('wp_loaded','ss_import_source_catalogue',30);
 
