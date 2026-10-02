@@ -19,6 +19,34 @@ function ss_source_variations($base){
  return $all;
 }
 function ss_money_from_api($amount,$minor){return ((float)$amount)/pow(10,(int)$minor);}
+
+/* Import every image used by the Playground build into the native WordPress
+ * Media Library. The source URL is kept only as provenance/fallback. */
+function ss_media_source_key($url){
+ $parts=wp_parse_url($url);if(!$parts||empty($parts['host'])||empty($parts['path']))return esc_url_raw($url);
+ return strtolower($parts['host']).$parts['path'];
+}
+function ss_import_media_image($url,$title,$parent_id=0,$filename_base=''){
+ if(!$url)return 0;
+ $map=get_option('ss_media_source_map',[]);if(!is_array($map))$map=[];
+ $key=ss_media_source_key($url);
+ if(!empty($map[$key])&&get_post((int)$map[$key])&&get_post_type((int)$map[$key])==='attachment')return (int)$map[$key];
+ require_once ABSPATH.'wp-admin/includes/media.php';
+ require_once ABSPATH.'wp-admin/includes/file.php';
+ require_once ABSPATH.'wp-admin/includes/image.php';
+ $path=(string)wp_parse_url($url,PHP_URL_PATH);$ext=strtolower(pathinfo($path,PATHINFO_EXTENSION));
+ if(!in_array($ext,['jpg','jpeg','jpe','png','gif','webp'],true))$ext='jpg';
+ $base=$filename_base?sanitize_title($filename_base):sanitize_title($title);
+ if(!$base)$base='speedstar-image';
+ $tmp=download_url($url,45);if(is_wp_error($tmp))return 0;
+ $file=['name'=>$base.'.'.$ext,'tmp_name'=>$tmp];
+ $id=media_handle_sideload($file,$parent_id,$title);
+ if(is_wp_error($id)){@unlink($tmp);return 0;}
+ update_post_meta($id,'_wp_attachment_image_alt',sanitize_text_field($title));
+ update_post_meta($id,'_ss_source_url',esc_url_raw($url));
+ $map[$key]=(int)$id;update_option('ss_media_source_map',$map,false);
+ return (int)$id;
+}
 function ss_ensure_scale_taxonomy($scales){
  $attr_id=wc_attribute_taxonomy_id_by_name('scale');
  if(!$attr_id){$attr_id=wc_create_attribute(['name'=>'Scale','slug'=>'scale','type'=>'select','order_by'=>'menu_order','has_archives'=>false]);delete_transient('wc_attribute_taxonomies');}
@@ -28,7 +56,7 @@ function ss_ensure_scale_taxonomy($scales){
 }
 function ss_import_source_catalogue(){
  if(!class_exists('WooCommerce'))return;
- $version='full-catalogue-v6-complete-attributes';
+ $version='full-catalogue-v7-native-media-library';
  if(get_option('ss_catalogue_seed_version')===$version)return;
  $base='https://speedstarmodels.com/wp-json/wc/store/v1';
  $items=ss_source_products($base); if(!$items)return;
@@ -56,7 +84,15 @@ function ss_import_source_catalogue(){
   if($product_attrs){$attrs=[];foreach($product_attrs as $pos=>$va){$attr=new WC_Product_Attribute();if($va['taxonomy']==='pa_scale'){$term_ids=[];foreach($va['terms'] as $t){$term=get_term_by('slug',$t['slug'],'pa_scale');if($term)$term_ids[]=$term->term_id;}$attr->set_id(wc_attribute_taxonomy_id_by_name('scale'));$attr->set_name('pa_scale');$attr->set_options($term_ids);}else{$attr->set_id(0);$attr->set_name($va['name']);$attr->set_options(array_column($va['terms'],'name'));}$attr->set_position($pos);$attr->set_visible(true);$attr->set_variation(!empty($va['variation']));$attrs[]=$attr;}$p->set_attributes($attrs);}
   else{$price=$x['prices']['price']??'0';$minor=(int)($x['prices']['currency_minor_unit']??2);$p->set_regular_price((string)ss_money_from_api($price,$minor));}
   $id=$p->save();$tagids=[];foreach(($x['tags']??[]) as $tag){$slug=$tag['slug']??sanitize_title($tag['name']??'');$term=get_term_by('slug',$slug,'product_tag');if(!$term&&!empty($tag['name'])){$made=wp_insert_term($tag['name'],'product_tag',['slug'=>$slug]);if(!is_wp_error($made))$term=get_term($made['term_id'],'product_tag');}if($term&&!is_wp_error($term))$tagids[]=$term->term_id;}if($tagids)wp_set_object_terms($id,$tagids,'product_tag');update_post_meta($id,'_ss_playground_product',1);update_post_meta($id,'_ss_source_id',$source_id);update_post_meta($id,'_ss_source_permalink',$x['permalink']??'');
-  $imgs=[];foreach(($x['images']??[]) as $im)if(!empty($im['src']))$imgs[]=$im['src'];update_post_meta($id,'_ss_external_gallery',$imgs);if($imgs)update_post_meta($id,'_ss_external_image',$imgs[0]);
+  $imgs=[];$media_ids=[];$media_failures=[];
+  foreach(($x['images']??[]) as $idx=>$im){
+   if(empty($im['src']))continue;$src=$im['src'];$imgs[]=$src;
+   $aid=ss_import_media_image($src,$p->get_name().' image '.($idx+1),$id,'speedstar-'.$x['slug'].'-'.str_pad((string)($idx+1),2,'0',STR_PAD_LEFT));
+   if($aid)$media_ids[]=$aid;else $media_failures[]=$src;
+  }
+  update_post_meta($id,'_ss_external_gallery',$imgs);if($imgs)update_post_meta($id,'_ss_external_image',$imgs[0]);
+  if($media_ids){$p->set_image_id($media_ids[0]);$p->set_gallery_image_ids(array_slice($media_ids,1));$p->save();}
+  if($media_failures)update_post_meta($id,'_ss_media_import_failures',$media_failures);else delete_post_meta($id,'_ss_media_import_failures');
   $price=$x['prices']['price']??'0';$minor=(int)($x['prices']['currency_minor_unit']??2);$range=$x['prices']['price_range']??[];$min=$range['min_amount']??$price;$max=$range['max_amount']??$price;update_post_meta($id,'_ss_price_min',ss_money_from_api($min,$minor));update_post_meta($id,'_ss_price_max',ss_money_from_api($max,$minor));update_post_meta($id,'_ss_scales',$scales);
   if($variation_attrs){
    $expected_for_product=count($x['variations']??[]);$expected_variations+=$expected_for_product;
@@ -67,7 +103,8 @@ function ss_import_source_catalogue(){
   }
  }
  if(!get_page_by_path('about'))wp_insert_post(['post_title'=>'About','post_name'=>'about','post_status'=>'publish','post_type'=>'page']);
- update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_expected_variations',$expected_variations);update_option('ss_catalogue_created_variations',$created_variations);update_option('ss_catalogue_variation_mismatches',$variation_mismatches);update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
+ $media_map=get_option('ss_media_source_map',[]);$media_failures=0;foreach(wc_get_products(['limit'=>-1,'status'=>'publish']) as $check_product){$fails=get_post_meta($check_product->get_id(),'_ss_media_import_failures',true);if(is_array($fails))$media_failures+=count($fails);}
+ update_option('ss_catalogue_seed_version',$version);update_option('ss_catalogue_seed_count',count($items));update_option('ss_catalogue_variation_count',count($variations));update_option('ss_catalogue_expected_variations',$expected_variations);update_option('ss_catalogue_created_variations',$created_variations);update_option('ss_catalogue_variation_mismatches',$variation_mismatches);update_option('ss_media_import_count',is_array($media_map)?count($media_map):0);update_option('ss_media_import_failures',$media_failures);update_option('ss_catalogue_seeded_at',time());flush_rewrite_rules(false);
 }
 add_action('wp_loaded','ss_import_source_catalogue',30);
 
