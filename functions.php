@@ -69,6 +69,8 @@ function ss_reconcile_media_library(){
  if(get_option('ss_playground_seed')!=='1'||!function_exists('ss_media_source_key')||!function_exists('ss_import_media_image'))return;
  $expected=get_option('ss_media_expected_sources',[]);$map=get_option('ss_media_source_map',[]);
  if(!is_array($expected))$expected=[];if(!is_array($map))$map=[];
+ $valid_map=[];foreach($map as $key=>$id)if(ss_media_attachment_valid($id))$valid_map[$key]=(int)$id;
+ if(count($valid_map)!==count($map)){update_option('ss_media_source_map',$valid_map,false);$map=$valid_map;}
  $missing=array_diff_key($expected,$map);$attempted=0;
  foreach($missing as $key=>$url){if($attempted>=8)break;$attempted++;ss_import_media_image($url,'Speedstar Models image',0,'speedstar-media-'.substr(md5($key),0,12));}
  $map=get_option('ss_media_source_map',[]);if(!is_array($map))$map=[];
@@ -79,7 +81,7 @@ function ss_reconcile_media_library(){
  }
  $workshops=get_posts(['post_type'=>'workshop','post_status'=>'publish','numberposts'=>-1]);
  foreach($workshops as $article){$src=get_post_meta($article->ID,'_ss_remote_image',true);if(!$src)continue;$key=ss_media_source_key($src);if(!empty($map[$key])&&get_post((int)$map[$key]))set_post_thumbnail($article->ID,(int)$map[$key]);}
- $valid=[];foreach($expected as $key=>$url)if(!empty($map[$key])&&get_post((int)$map[$key]))$valid[$key]=$map[$key];
+ $valid=[];foreach($expected as $key=>$url)if(!empty($map[$key])&&ss_media_attachment_valid($map[$key]))$valid[$key]=(int)$map[$key];
  update_option('ss_media_expected_count',count($expected));update_option('ss_media_import_count',count($valid));update_option('ss_media_import_failures',count($expected)-count($valid));
 }
 if(get_option('ss_playground_seed')==='1')add_action('wp_loaded','ss_reconcile_media_library',80);
