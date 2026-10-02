@@ -32,9 +32,8 @@ Text Domain: speedstar-models
 .hero-rotator:after{display:none}
 .hero-slide{position:absolute;inset:0;display:flex;align-items:center;opacity:0;animation:ssHero 18s infinite;background-size:cover;background-position:center}
 .hero-slide:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,7,8,.98) 0%,rgba(5,7,8,.88) 30%,rgba(5,7,8,.36) 58%,rgba(5,7,8,.16) 100%)}
-.hero-slide-1{background-image:url('https://i0.wp.com/speedstarmodels.com/wp-content/uploads/2025/11/il_794xN.6924719895_12ly.jpg?fit=1600%2C1064&ssl=1')}
-.hero-slide-2{background-image:url('https://i0.wp.com/speedstarmodels.com/wp-content/uploads/2025/12/enkei_gtc02.jpg?fit=1920%2C1538&ssl=1');animation-delay:6s}
-.hero-slide-3{background-image:url('https://i0.wp.com/speedstarmodels.com/wp-content/uploads/2025/11/il_794xN.6164545748_6blb.jpg?fit=1400%2C1442&ssl=1');animation-delay:12s}
+.hero-slide-2{animation-delay:6s}
+.hero-slide-3{animation-delay:12s}
 .hero-slide .hero-in{width:100%;padding-top:40px;padding-bottom:40px}
 .hero-slide h1{font-size:clamp(48px,6vw,82px);max-width:720px}
 .hero-slide p{max-width:520px}
