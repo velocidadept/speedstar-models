@@ -60,8 +60,8 @@ function ss_ensure_scale_taxonomy($scales){
  return $attr_id;
 }
 function ss_import_source_catalogue(){
- if(!class_exists('WooCommerce'))return;
- $version='full-catalogue-v8-media-integrity-avif';
+ if(!class_exists('WooCommerce')||!function_exists('wc_get_products')||!class_exists('WC_Product_Variable')||!class_exists('WC_Product_Variation'))return;
+ $version='full-catalogue-v9-safe-bootstrap';
  if(get_option('ss_catalogue_seed_version')===$version)return;
  $base='https://speedstarmodels.com/wp-json/wc/store/v1';
  $items=ss_source_products($base); if(!$items)return;
