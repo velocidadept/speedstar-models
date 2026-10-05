@@ -4,7 +4,7 @@ add_action('wp_enqueue_scripts',function(){
  $v=wp_get_theme()->get('Version');
  wp_enqueue_style('speedstar-models',get_stylesheet_uri(),[],$v);
  wp_enqueue_script('speedstar-storefront',get_template_directory_uri().'/assets/js/storefront.js',[],$v,true);
- if(is_product())wp_enqueue_script('wc-add-to-cart-variation');
+ if(function_exists('is_product')&&is_product())wp_enqueue_script('wc-add-to-cart-variation');
 });
 add_filter('woocommerce_enqueue_styles','__return_empty_array');
 
@@ -66,7 +66,7 @@ if(get_option('ss_playground_seed')==='1') require_once get_template_directory()
  * or Workshop is mirrored into Media Library, retried if a remote host blips,
  * and reattached to the content that uses it. */
 function ss_reconcile_media_library(){
- if(get_option('ss_playground_seed')!=='1'||!function_exists('ss_media_source_key')||!function_exists('ss_import_media_image'))return;
+ if(get_option('ss_playground_seed')!=='1'||!function_exists('wc_get_products')||!function_exists('ss_media_source_key')||!function_exists('ss_import_media_image'))return;
  $expected=get_option('ss_media_expected_sources',[]);$map=get_option('ss_media_source_map',[]);
  if(!is_array($expected))$expected=[];if(!is_array($map))$map=[];
  $valid_map=[];foreach($map as $key=>$id)if(ss_media_attachment_valid($id))$valid_map[$key]=(int)$id;
@@ -106,7 +106,7 @@ add_action('wp_head',function(){if(is_front_page())echo '<meta name="theme-color
 function ss_shop_url(){if(function_exists('wc_get_page_permalink')){$url=wc_get_page_permalink('shop');if($url)return $url;}return home_url('/shop/');}
 function ss_category_url($slug){$term=get_term_by('slug',$slug,'product_cat');return $term&&!is_wp_error($term)?get_term_link($term):home_url('/product-category/'.$slug.'/');}
 add_action('pre_get_posts',function($q){
- if(is_admin()||!$q->is_main_query()||!(is_shop()||is_product_category()))return;
+ if(is_admin()||!$q->is_main_query()||!function_exists('is_shop')||!function_exists('is_product_category')||!(is_shop()||is_product_category()))return;
  $scale=isset($_GET['ss_scale'])?sanitize_title(wp_unslash($_GET['ss_scale'])):'';
  if(!$scale||!term_exists($scale,'pa_scale'))return;
  $tax=(array)$q->get('tax_query');$tax[]=['taxonomy'=>'pa_scale','field'=>'slug','terms'=>[$scale]];$q->set('tax_query',$tax);
