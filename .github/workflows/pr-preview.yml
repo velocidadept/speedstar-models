@@ -37,22 +37,22 @@ jobs:
               },
               "steps": [
                 {
-                  "step": "installTheme",
-                  "themeData": {
-                    "resource": "git:directory",
-                    "url": "https://github.com/${{ github.repository }}.git",
-                    "ref": "${{ github.event.pull_request.head.ref }}",
-                    "path": "/"
+                  "step": "installPlugin",
+                  "pluginData": {
+                    "resource": "wordpress.org/plugins",
+                    "slug": "woocommerce"
                   },
                   "options": {
                     "activate": true
                   }
                 },
                 {
-                  "step": "installPlugin",
-                  "pluginData": {
-                    "resource": "wordpress.org/plugins",
-                    "slug": "woocommerce"
+                  "step": "installTheme",
+                  "themeData": {
+                    "resource": "git:directory",
+                    "url": "https://github.com/${{ github.repository }}.git",
+                    "ref": "${{ github.event.pull_request.head.ref }}",
+                    "path": "/"
                   },
                   "options": {
                     "activate": true
