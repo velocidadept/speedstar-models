@@ -1,0 +1,66 @@
+name: Speedstar staging release ZIPs
+
+on:
+  push:
+    branches: [preview-workflow-test]
+    paths:
+      - '.github/workflows/staging-build.yml'
+      - '*.php'
+      - 'style.css'
+      - 'assets/**'
+      - 'inc/**'
+      - 'plugins/speedstar-core/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PHP syntax checks
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+      - name: Build staging install packages
+        run: |
+          set -euo pipefail
+          mkdir -p dist/theme/speedstar-models dist/plugin/speedstar-core dist/output
+          cp -a ./*.php ./style.css ./assets ./inc dist/theme/speedstar-models/
+          cp -a plugins/speedstar-core/. dist/plugin/speedstar-core/
+          # Do not ship the Playground catalogue importer in a real staging installation.
+          rm -f dist/theme/speedstar-models/inc/playground-import.php
+          # Remove its guarded include so a copied Playground option cannot cause a fatal error.
+          sed -i "/if(get_option('ss_playground_seed')==='1') require_once get_template_directory().*playground-import.php';/d" dist/theme/speedstar-models/functions.php
+          # Disable Playground-only hooks, including media reconciliation and Workshop demo seeding.
+          sed -i "s/if(get_option('ss_playground_seed')==='1')add_action(/if(false)add_action(/g" dist/theme/speedstar-models/functions.php
+          sed -i "s/Theme Name: Speedstar Models Dev/Theme Name: Speedstar Models/; s/Version: 0.7.0/Version: 0.9.0-rc1/" dist/theme/speedstar-models/style.css
+          sed -i "s/Version: 0.8.0/Version: 0.9.0-rc1/" dist/plugin/speedstar-core/speedstar-core.php
+          find dist/theme dist/plugin -name '*.php' -print0 | xargs -0 -n1 php -l
+          (cd dist/theme && zip -qr ../output/speedstar-models-theme-0.9.0-rc1.zip speedstar-models)
+          (cd dist/plugin && zip -qr ../output/speedstar-core-0.9.0-rc1.zip speedstar-core)
+          sha256sum dist/output/*.zip > dist/output/SHA256SUMS.txt
+          cat > dist/output/LEIA-ME-STAGING.txt <<'EOF'
+          SPEEDSTAR MODELS 0.9 RC1 - STAGING
+          ==================================
+          1. Criar staging isolado e protegido por password; bloquear indexacao.
+          2. Clonar a base de dados e wp-content/uploads da loja real, usando a ferramenta de staging do alojamento.
+          3. Confirmar que o staging tem WooCommerce instalado e ativo.
+          4. Instalar speedstar-models-theme-0.9.0-rc1.zip em Aparencia > Temas > Adicionar > Enviar tema.
+          5. Instalar speedstar-core-0.9.0-rc1.zip em Plugins > Adicionar > Enviar plugin.
+          6. Ativar o tema e o plugin. Verificar menus, produtos, imagens, variacoes, carrinho e checkout.
+          7. DESATIVAR pagamentos reais, emails reais e integracoes de envio antes de simular encomendas.
+          8. Nao importar products.json no staging: os dados WooCommerce da loja real sao a fonte de verdade.
+          9. O seed de demo e o importador de imagens do Playground NAO estao ativos neste pacote.
+          10. O Workshop de demonstracao do Playground nao e criado automaticamente no staging.
+          11. Confirmar permalinks, WooCommerce HPOS, CTT tracking e packing slip PDF.
+          12. Nao instalar diretamente em producao. Este build e candidato de testes, nao 1.0 final.
+          EOF
+      - name: Upload staging packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: speedstar-staging-0.9.0-rc1
+          path: dist/output/*
+          retention-days: 30
