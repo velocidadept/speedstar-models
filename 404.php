@@ -1,0 +1,1 @@
+<?php get_header(); ?><main><section class="pagehero error-hero"><div class="wrap"><div class="eyebrow">404 · Wrong turn</div><h1>THIS PART<br>DOESN’T FIT.</h1><p class="ss-lead">The page may have moved or the address may be incorrect.</p><a class="btn" href="<?php echo esc_url(home_url('/')); ?>">BACK TO SPEEDSTAR</a></div></section></main><?php get_footer(); ?>

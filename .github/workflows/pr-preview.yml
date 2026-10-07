@@ -26,9 +26,26 @@ jobs:
               },
               "siteOptions": {
                 "blogname": "Speedstar Models Dev",
-                "blogdescription": "Scale Model Studio"
+                "blogdescription": "Scale Model Studio",
+                "ss_playground_seed": "1",
+                "woocommerce_currency": "EUR",
+                "woocommerce_currency_pos": "right_space",
+                "woocommerce_price_decimal_sep": ",",
+                "woocommerce_price_thousand_sep": ".",
+                "woocommerce_price_num_decimals": "2",
+                "woocommerce_default_country": "PT"
               },
               "steps": [
+                {
+                  "step": "installPlugin",
+                  "pluginData": {
+                    "resource": "wordpress.org/plugins",
+                    "slug": "woocommerce"
+                  },
+                  "options": {
+                    "activate": true
+                  }
+                },
                 {
                   "step": "installTheme",
                   "themeData": {
@@ -36,16 +53,6 @@ jobs:
                     "url": "https://github.com/${{ github.repository }}.git",
                     "ref": "${{ github.event.pull_request.head.ref }}",
                     "path": "/"
-                  },
-                  "options": {
-                    "activate": true
-                  }
-                },
-                {
-                  "step": "installPlugin",
-                  "pluginData": {
-                    "resource": "wordpress.org/plugins",
-                    "slug": "woocommerce"
                   },
                   "options": {
                     "activate": true
